@@ -1,0 +1,151 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "d5ce90dcfab2dc045c20650ae97b6a93",
+    "entities": [
+      {
+        "tableName": "resposta",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `questaoId` TEXT NOT NULL, `data` INTEGER NOT NULL, `resposta` INTEGER NOT NULL, `acertou` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "questaoId",
+            "columnName": "questaoId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "data",
+            "columnName": "data",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "resposta",
+            "columnName": "resposta",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "acertou",
+            "columnName": "acertou",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_resposta_questaoId",
+            "unique": false,
+            "columnNames": [
+              "questaoId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_resposta_questaoId` ON `${TABLE_NAME}` (`questaoId`)"
+          },
+          {
+            "name": "index_resposta_data",
+            "unique": false,
+            "columnNames": [
+              "data"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_resposta_data` ON `${TABLE_NAME}` (`data`)"
+          }
+        ]
+      },
+      {
+        "tableName": "anotacao",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `questaoId` TEXT NOT NULL, `texto` TEXT NOT NULL, `criadaEm` INTEGER NOT NULL, `editadaEm` INTEGER)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "questaoId",
+            "columnName": "questaoId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "texto",
+            "columnName": "texto",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "criadaEm",
+            "columnName": "criadaEm",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "editadaEm",
+            "columnName": "editadaEm",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_anotacao_questaoId",
+            "unique": false,
+            "columnNames": [
+              "questaoId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_anotacao_questaoId` ON `${TABLE_NAME}` (`questaoId`)"
+          }
+        ]
+      },
+      {
+        "tableName": "favorito",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`questaoId` TEXT NOT NULL, `desde` INTEGER NOT NULL, PRIMARY KEY(`questaoId`))",
+        "fields": [
+          {
+            "fieldPath": "questaoId",
+            "columnName": "questaoId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "desde",
+            "columnName": "desde",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "questaoId"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd5ce90dcfab2dc045c20650ae97b6a93')"
+    ]
+  }
+}
