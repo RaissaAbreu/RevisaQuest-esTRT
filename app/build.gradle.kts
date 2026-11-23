@@ -6,6 +6,11 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
+// Sincronização: o Firebase só é configurado quando app/google-services.json existe.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 // Assinatura de release: o CI (GitHub Actions) fornece a chave por variáveis de ambiente.
 // Sem elas, o build de release usa a chave de debug (útil só para testes locais).
 val keystorePath: String? = System.getenv("APP_KEYSTORE")
@@ -51,6 +56,10 @@ android {
     buildFeatures {
         compose = true
     }
+    sourceSets {
+        // esquemas do banco para o teste de migração (só no build de debug)
+        getByName("debug").assets.srcDir("$projectDir/schemas")
+    }
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
@@ -87,9 +96,19 @@ dependencies {
 
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
 
+    // Sincronização entre aparelhos (Firebase) e login com Google
+    implementation(platform("com.google.firebase:firebase-bom:33.15.0"))
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.10.2")
+    implementation("androidx.credentials:credentials:1.5.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
+
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.14.1")
     testImplementation("androidx.test:core:1.6.1")
+    testImplementation("androidx.room:room-testing:2.7.1")
     testImplementation("androidx.compose.ui:ui-test-junit4")
     testImplementation("io.github.takahirom.roborazzi:roborazzi:1.43.0")
     testImplementation("io.github.takahirom.roborazzi:roborazzi-compose:1.43.0")

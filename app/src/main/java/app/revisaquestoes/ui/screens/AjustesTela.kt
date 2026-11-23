@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -56,6 +57,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.revisaquestoes.QuestoesApp
 import app.revisaquestoes.versaoDoApp
 import app.revisaquestoes.data.Ajustes
 import app.revisaquestoes.data.Analise
@@ -199,12 +201,15 @@ fun AjustesTela() {
                 ) { Icon(Icons.Filled.Add, null); Spacer(Modifier.width(6.dp)); Text("Adicionar lembrete") }
             }
 
+            item { TituloSecao("Sincronização entre aparelhos") }
+            item { CartaoSync() }
+
             item { TituloSecao("Sobre") }
             item {
                 Text(
                     "RevisaQuestõesTRT ${versaoDoApp(contexto)}\nTRT-RS · Analista Judiciário\nProva: ${Analise.data(Analise.DATA_PROVA)}\n" +
                         "Base: ${base?.questoes?.size ?: 0} questões em ${base?.materias?.size ?: 0} matérias (versão ${base?.versao ?: "–"})\n" +
-                        "Seu progresso fica salvo no celular e entra no backup automático do Android.",
+                        "Seu progresso fica salvo no aparelho, na nuvem (se você entrar com o Google) e no backup automático do Android.",
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -249,5 +254,57 @@ private fun LinhaSwitch(rotulo: String, valor: Boolean, enabled: Boolean = true,
     ) {
         Text(rotulo, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
         Switch(checked = valor, onCheckedChange = onChange, enabled = enabled)
+    }
+}
+
+@Composable
+private fun CartaoSync() {
+    val contexto = LocalContext.current
+    val app = contexto.applicationContext as QuestoesApp
+    val estado by app.sync.estado.collectAsStateWithLifecycle()
+    val pendentes by app.repo.dao.totalPendentes().collectAsStateWithLifecycle(0)
+    val escopo = rememberCoroutineScope()
+    Column(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerLowest).padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        when {
+            !estado.configurado -> Text(
+                "A sincronização ainda não foi configurada nesta versão do app (falta o arquivo do Firebase).",
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            estado.email == null -> {
+                Text(
+                    "Entre com a sua conta Google para manter respostas, anotações, favoritos e ajustes iguais no celular e no tablet. " +
+                        "Use a mesma conta nos dois aparelhos.",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                FilledTonalButton(
+                    onClick = { (contexto as? android.app.Activity)?.let { act -> escopo.launch { app.sync.entrar(act) } } },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("Entrar com Google") }
+            }
+            else -> {
+                Text("Conectada como ${estado.email}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                Text(
+                    when {
+                        estado.sincronizando -> "Sincronizando…"
+                        pendentes > 0 -> "$pendentes alteração(ões) aguardando envio"
+                        estado.ultima != null -> "Tudo sincronizado · ${Analise.dataHora(estado.ultima!!)}"
+                        else -> "Conectada"
+                    },
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    FilledTonalButton(onClick = { escopo.launch { app.sync.sincronizarAgora() } }, modifier = Modifier.weight(1f)) { Text("Sincronizar agora") }
+                    OutlinedButton(onClick = { app.sync.sair() }, modifier = Modifier.weight(1f)) { Text("Sair") }
+                }
+                TextButton(onClick = { escopo.launch { app.sync.enviarTudoDeNovo() } }) {
+                    Text("Enviar tudo deste aparelho de novo")
+                }
+            }
+        }
+        estado.erro?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error) }
     }
 }

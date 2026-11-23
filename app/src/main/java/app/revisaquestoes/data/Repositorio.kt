@@ -31,7 +31,7 @@ data class Filtro(
 class Repositorio(context: Context) {
     private val app = context.applicationContext
     val dao = AppDatabase.get(app).dao()
-    private val ajustesRepo = AjustesRepo(app)
+    val ajustesRepo = AjustesRepo(app)
 
     private val _base = MutableStateFlow<BaseQuestoes?>(null)
     /** Questões dos PDFs (null enquanto carrega). */
@@ -76,17 +76,28 @@ class Repositorio(context: Context) {
     }
 
     suspend fun favoritar(questaoId: String, favorito: Boolean) {
-        if (favorito) dao.inserirFavorito(Favorito(questaoId, System.currentTimeMillis()))
-        else dao.apagarFavorito(Favorito(questaoId, 0))
+        val agora = System.currentTimeMillis()
+        val atual = dao.favorito(questaoId)
+        dao.salvarFavorito(
+            Favorito(
+                questaoId = questaoId,
+                desde = if (favorito) agora else atual?.desde ?: agora,
+                ativo = favorito, atualizadoEm = agora, pendente = true,
+            )
+        )
     }
 
     suspend fun salvarAnotacao(questaoId: String, texto: String, existente: Anotacao?) {
         val agora = System.currentTimeMillis()
-        if (existente == null) dao.inserirAnotacao(Anotacao(questaoId = questaoId, texto = texto, criadaEm = agora))
-        else dao.atualizarAnotacao(existente.copy(texto = texto, editadaEm = agora))
+        if (existente == null) dao.inserirAnotacao(Anotacao(questaoId = questaoId, texto = texto, criadaEm = agora, atualizadoEm = agora))
+        else dao.atualizarAnotacao(existente.copy(texto = texto, editadaEm = agora, atualizadoEm = agora, pendente = true))
     }
 
-    suspend fun apagarAnotacao(id: Long) = dao.apagarAnotacao(id)
+    /** Marca como apagada (o apagamento também vai para os outros aparelhos). */
+    suspend fun apagarAnotacao(id: Long) {
+        val a = dao.anotacao(id) ?: return
+        dao.atualizarAnotacao(a.copy(apagada = true, atualizadoEm = System.currentTimeMillis(), pendente = true))
+    }
 
     suspend fun salvarAjustes(a: Ajustes) = ajustesRepo.salvar(a)
 

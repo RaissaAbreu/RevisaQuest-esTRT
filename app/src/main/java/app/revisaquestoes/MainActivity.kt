@@ -10,7 +10,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.revisaquestoes.data.Ajustes
+import app.revisaquestoes.data.AppDatabase
 import app.revisaquestoes.data.Repositorio
+import app.revisaquestoes.sync.ServicoSync
 import app.revisaquestoes.notify.Lembretes
 import app.revisaquestoes.ui.AppNavegacao
 import app.revisaquestoes.ui.LocalRepo
@@ -22,14 +24,17 @@ import kotlinx.coroutines.launch
 
 class QuestoesApp : Application() {
     lateinit var repo: Repositorio
+    lateinit var sync: ServicoSync
     val escopo = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     override fun onCreate() {
         super.onCreate()
         repo = Repositorio(this)
+        sync = ServicoSync(this, AppDatabase.get(this), repo.ajustesRepo)
         Lembretes.criarCanal(this)
         escopo.launch {
             repo.carregarBase()
+            runCatching { sync.iniciar() }
             Lembretes.reagendar(this@QuestoesApp)
         }
     }
